@@ -1,0 +1,5 @@
+- name: restart kube
+  service:
+    name: kubelet
+    daemon_reload: yes
+    state: restarted

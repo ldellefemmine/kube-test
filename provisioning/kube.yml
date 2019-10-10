@@ -1,0 +1,16 @@
+---
+- hosts: all
+  become: true
+  gather_facts: no
+  pre_tasks:
+    - raw: apt-get clean && apt-get update && apt-get install -y python
+    - setup:
+  roles:
+    - docker
+    - noswap
+    - kubecommon
+    - {role: kubemaster, when: "inventory_hostname in groups['masters']" }
+    - {role: kubenode, when: "inventory_hostname in groups['workers']" }
+  vars:
+    - kube_net: ansible_eth1
+    - pod_network: 10.99.0.0/16

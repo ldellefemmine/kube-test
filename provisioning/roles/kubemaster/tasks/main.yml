@@ -1,0 +1,45 @@
+---
+- name: hack to resolve Problem with MergeList Issue
+  command: 'apt-get clean && apt-get update'
+ 
+- name: Install kubernetes admin tools
+  apt:
+    package: "{{ packages }}"
+    state: present
+    autoclean: yes
+  vars:
+    packages:
+      - kubeadm
+      - kubectl
+
+- name: Check if kubernetes is installed
+  stat:
+    path: /etc/kubernetes/manifests/kube-scheduler.yaml
+  register:
+    kube_status
+
+- name: Initialize Kubernetes cluster
+  command: "kubeadm init --apiserver-advertise-address={{ hostvars[inventory_hostname][kube_net]['ipv4']['address']  }} --apiserver-cert-extra-sans={{ hostvars[inventory_hostname][kube_net]['ipv4']['address']  }} --node-name master --pod-network-cidr={{ pod_network }}"
+  when: kube_status.stat.exists == false
+
+- name: Setup kubeconfig
+  command: "{{ item }}"
+  with_items:
+    - mkdir -p /home/vagrant/.kube
+    - cp -i /etc/kubernetes/admin.conf /home/vagrant/.kube/config
+    - chown vagrant:vagrant /home/vagrant/.kube/config
+
+- name: Check if Calico is installed
+  become: false
+  shell: "kubectl get -o name --namespace=kube-system deployments.app/calico-kube-controllers"
+  ignore_errors: yes
+  register: calico_status
+
+- name: Install Calico
+  include: calico_install.yml
+  when: calico_status.rc == 1
+
+- name: Generate join command
+  become: false
+  shell: kubeadm token create --print-join-command
+  register: join_command

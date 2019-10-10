@@ -1,0 +1,43 @@
+---
+- name: Setup DNS
+  lineinfile:
+    path: /etc/netplan/01-netcfg.yaml
+    regexp: '.*addresses: \[.*\]'
+    line: "          addresses: [ 8.8.8.8, 8.8.4.4 ]"
+
+- name: Apply config
+  command: netplan apply
+
+- name: Adding Kubernetes signing key
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+
+- name: hack to resolve Problem with MergeList Issue
+  command: 'apt-get clean && apt-get update'
+
+- name: Adding Kubernetes repository
+  apt_repository:
+    repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+    state: present
+    filename: kubernetes
+
+- name: Install commons Kubernetes debs
+  apt:
+    name: "{{ packages }}"
+    state: present
+    autoclean: yes
+  vars:
+    packages:
+      - kubelet
+      - kubeadm
+
+- name: Configure node ip
+  template:
+    src: kubelet.j2
+    dest: /etc/default/kubelet
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart kube

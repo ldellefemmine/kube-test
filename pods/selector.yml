@@ -1,0 +1,5 @@
+selector:
+  matchLabels:
+    app: alpaca
+  matchExpressions:
+    - { key: ver, operator: In, values: [1,2]}

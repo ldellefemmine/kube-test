@@ -1,0 +1,10 @@
+---
+- name: Wait kube master is ready
+  wait_for: 
+    host: 192.168.39.10
+    port: 2380
+    delay: 300
+    state: drained
+
+- name: Join the node
+  shell: "{{ join-command }}"
