@@ -1,0 +1,45 @@
+---
+- name: hack to resolve Problem with MergeList Issue
+  command: 'apt-get clean && apt-get udpate'
+
+- name: Install commons packages
+  apt:
+    name: "{{ packages }}"
+    state: present
+    autoclean: yes
+  vars:
+    packages:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg-agent
+      - software-properties-common
+
+- name: Add cri-o repository
+  apt_repository:
+    repo: ppa:projectatomic/ppa
+    state: present
+
+- name: hack to resolve Problem with MergeList Issue
+  command: 'apt-get clean && apt-get update'
+
+- name: install cri-o
+  apt:
+    name: "{{ packages }}"
+    state: present
+    autoclean: yes
+  vars:
+    packages:
+      - cri-o-1.15
+
+- name: create cni directory
+  file:
+    path: /etc/crio/net.d
+    mode: 0755
+    state: directory
+
+- name: configure cri-o
+  lineinfile:
+    path: /etc/crio/crio.conf
+    regexp: '^network_dir ='
+    line: 'network_dir = "/etc/crio/net.d/"'

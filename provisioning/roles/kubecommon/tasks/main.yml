@@ -5,6 +5,12 @@
     regexp: '.*addresses: \[.*\]'
     line: "          addresses: [ 8.8.8.8, 8.8.4.4 ]"
 
+- name: configure sysctl
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
+    sysctl_set: yes
+
 - name: Apply config
   command: netplan apply
 
